@@ -1,0 +1,687 @@
+﻿<!doctype html>
+<html lang="en.png">
+  <head>
+    <meta charset="utf-8">
+    <title>Ray Tracing Tutorial</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/theme/default.css">
+    <link rel="stylesheet" href="css/custom.css">
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/ze  nburn.css">
+    <link rel="stylesheet" href="css/gh-fork-ribbon.css">
+    <script>
+      // If the query includes 'print-pdf' we'll use the PDF print sheet
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <!-- Used to fade in a background when a specific slide state is reached -->
+      <div class="state-background"></div>
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+          <!-- 0 Title -->
+          <section>
+              <section>
+                  <h1>Ray Tracing Tutorial</h1>
+                  <h4>This is an interactive tutorial that will guide you through the computer graphics process of ray tracing.</h4>
+                  <img src="https://www.scratchapixel.com/images/upload/introduction-to-ray-tracing/pixelrender.gif" height="150" width="250">
+
+                  <!--<canvas data-sample="spinning_wireframe_torus"></canvas>-->
+              </section>
+
+          </section>
+
+          <!-- 1 -->
+          <section>
+              <!--1/0 -->
+              <section>
+                  <h2>The basic ray tracing algorithm</h2>
+                  <br />
+                  <!--This can come in one at a time, and then when the the words come in, an image can appear with the words at the bottom
+              depicting each othe the 3 elements-->
+                  <h4>Ray Generation: computes the origin and direction of each pixel's ray based on camera geometry</h4>
+                  <h4>Ray Intersection: finds the closest object intersecting the viewing ray</h4>
+                  <h4>Shading: computes the pixel color based on results of ray intersection</h4>
+                  <!--these descriptions can either stay here, or be placed in their respective sections-->
+              </section>
+
+              <!--1/1 -->
+              <section>
+                  <h2>The basic ray tracing algorithm cont.</h2>
+                  <h4>
+                      <img style="display:inline" src="images/rayTraceAlgorithm.png">
+                  </h4>
+                  <img src="https://www.scratchapixel.com/images/upload/ray-tracing-camera/campixel.gif?" height="225" width="300">
+                  <!--this can be either left as is, or changed to the version where the code can be copied-->
+              </section>
+
+          </section>
+
+          <section>
+              <section>
+                  <h3>Ray Generation</h3>
+                  <h4> Ray generation computes the origin and direction of each pixel's viewing ray based on the camera geometry.</h4>
+                  <!--<img class="float_left" style="display:inline" src="images/Vertices.png">
+    <div class="float_left" style="line-height: 8; padding: 20px">to</div>
+    <canvas data-sample="spinning_wireframe_cube" class="float_left" style="display:inline"></canvas>
+     <div class="float_left" style="line-height: 5; padding: 20px">?</div>-->
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Ray_trace_diagram.svg/300px-Ray_trace_diagram.svg.png" height="250" width="350">
+
+              </section>
+
+          </section>
+
+          <section>
+              <section>
+                  <h2>Perspective</h2>
+                  <p>We need to represent a 3D object or scene with a 2D drawing</p>
+                  <p>Many unconventional approaches such fisheye and peripheral</p>
+                  <img src="http://www.puremix.net/images/interface/images_articles/2016_06_StuckInAMix/perspective.jpg" height="250" width="450"/>
+              </section>
+              <section>
+                  <h2>Linear Perspective</h2>
+                  <ul>
+                      <li class="fragment">
+                          How to represent a 3D image with a 2D drawing has been studied for hundreds of years
+                      </li>
+                      <li class="fragment">
+                          The standard approach is linear perspective
+                      </li>
+                      <li class="fragment">
+                          Objects project onto an image plane in a way that straight lines in the scene become straight lines in the image.
+                          <img src="http://teresabernardart.com/wp-content/uploads/2015/08/one-point-perspective-demo.jpg" height="150" width="250" />
+                          <!---->
+                          <!--Far into the distance, the two parallel lines look like they converge at one point.
+    This is called a “vanishing point.” Objects along these lines get smaller as they approach the vanishing point,
+    suggesting distance. -->
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Parallel Projection</h2>
+                  <ul>
+                      <li class="fragment">
+                          The simplest type of projection is parallel projection
+                      </li>
+                      <li class="fragment">
+                          3D points are mapped to 2D by moving them along a projection direction until they hit the image plane
+                      </li>
+                      <li class="fragment">
+                          The view produced is determined by the choice of projection direction and image plane
+                      </li>
+                      <li class="fragment">
+                          Keeps the parallel lines parallel and preserves the size and shape of planar objects that are parallel to the image plane
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Perspective Projection</h2>
+                  <ul>
+                      <li class="fragment">
+                          Used to produce natural-looking views
+                      </li>
+                      <li class="fragment">
+                          Project along lines that pass through a single point, the viewpoint, rather than parallel lines
+                      </li>
+                      <li class="fragment">
+                          Objects father from the viewpoint naturally become smaller when they are projected
+                      </li>
+                  </ul>
+              </section>
+          </section>
+
+          <section>
+              <section>
+                  <h2>Computing Viewing Rays</h2>
+                  <p>We need to send a ray from the eye to a point on the image plane</p>
+                  <img src="https://2.bp.blogspot.com/-GtcGfy5C5rY/VblG-Gn5saI/AAAAAAAAAKE/KVo3wT_dlhA/s1600/ray_casting_tracing.png" alt="ViewingRays" width="350" height="300">
+
+              </section>
+
+              <section>
+                  <h2>Eye position</h2>
+                  <ul>
+                      <li class="fragment">
+                          The location of the viewer
+                      </li>
+                      <li class="fragment">
+                          Where the rays will be generated from
+                      </li>
+                      <li class="fragment">
+                          Also known as the viewpoint or eye point
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Viewing Plane</h2>
+                  <ul>
+                      <li class="fragment">
+                          Plane used to view the image that is being rendered
+                          <img src="https://www.csee.umbc.edu/~rheingan/435/pages/res/view/view20-5.gif" alt="ViewingRays" width="350" height="300">
+
+                      </li>
+                      <!--image of the viewplane-->
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Location s</h2>
+                  <ul>
+                      <li class="fragment">
+                          Pixel center on the image plane
+                          <br />
+                          <img src="https://www.scratchapixel.com/images/upload/ray-tracing-camera/campixel.gif?" height="225" width="300">
+                          <!--image of the center of a pixel-->
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>What is a ray?</h2>
+                  <ul>
+                      <li class="fragment">
+                          Really just an origin point and a propagation direction
+                      </li>
+                      <li class="fragment">
+                          A 3D parametric line is ideal
+                          <!--image 4.6 from textbook-->
+                      </li>
+                      <li class="fragment">
+                          The 3D parametric line from eye, e, to points on the image place can be given by the following equation:
+                          <br />
+                          <img class="float_left" style="display:inline" src="images/WhatIsARay.png">
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Compute ray</h2>
+                  <ul>
+                      <li class="fragment">
+                          To compute a viewing ray, we nned to know e (which is given), and s
+                      </li>
+                      <li class="fragment">
+                          Start from orthonormal coordinate frame
+                      </li>
+                      <li class="fragment">
+                          Denoted by e and the basis vectors <strong>u</strong>, <strong>v</strong>, and <strong>w</strong>
+                      </li>
+                      <li class="fragment">
+                          Organized with u pointing rightward, v pointing upward, and w pointing backward to form a right handed coordinate system
+                      </li>
+                  </ul>
+              </section>
+
+          </section>
+
+
+          <section>
+              <section>
+                  <h2>Views</h2>
+                  <p>There are 2 different views we can use.</p>
+                  <p>We use orthographic views for parallel projection and perspective projection for perspective views  </p>
+                  <!-- insert image her of the parallel vs perspective projection on page 75-->
+              </section>
+              <section>
+                  <h2>Orthographic</h2>
+                  <ul>
+                      <li class="fragment">
+                          All rays will have the direction -w
+                      </li>
+                      <li class="fragment">
+                          It is possible for objects to be behind the camera
+                      </li>
+                      <li class="fragment">
+                          Use pixel's image-plane position as the ray's starting point
+                         <img class="float_left" style="display:inline" src="images/orthographic.png">
+                        <!--latex or copiable-->
+                          <!-- insert parallel image from text page 75-->
+                      </li>
+                  </ul>
+              </section>
+              <section>
+                  <h2>Perspective</h2>
+                  <ul>
+                      <li class="fragment">
+                          All rays have the same origin, at the viewpoint
+                      </li>
+                      <li class="fragment">
+                          Image plane is no longer placed positioned at e, but rather some distance d in front of e
+                      </li>
+                      <li class="fragment">
+                          This is called the image plane distance, or the focal length
+                          <img class="float_left" style="display:inline" src="images/perspective.png">
+
+                      </li>
+                  </ul>
+              </section>
+          </section>
+
+
+
+          <section>
+              <h2>Ray Intersection</h2>
+
+              <img src="https://www.scratchapixel.com/images/upload/ray-simple-shapes/plane.png?">
+          </section>
+
+          <section>
+
+              <section>
+                  <h3>Ray-Sphere Intersection</h3>
+                  <h3>
+                      Objective: Find the intersection between a ray e + td and a surface f(p) = 0
+                  </h3>
+              </section>
+
+              <section>
+                  <h3>
+                      Intersection Points
+                  </h3>
+                  <ul>
+                      <li class="fragment">
+                          Values of t must solve the equation:
+                          <br />
+                          <img class="float_left" style="display:inline" src="images/intersections.png">
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h3>The Sphere</h3>
+                  <ul>
+                      <li class="fragment">
+                          A sphere with center
+                          <img style="display:inline" src="images/sphereReq.png">
+                          and radius R can be represented by the implicit Function:
+                          <br />
+                          <img style="display:inline" src="images/sphereEquation.png">
+                      </li>
+                      <li class="fragment">
+                          Or in vector form:
+                          <br />
+                          <img style="display:inline" src="images/sphereVectorEquation.png">
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h3>How to Solve</h3>
+                  <ul>
+                      <li class="fragment">
+                          <img style="display:inline" src="images/sphereVectorEquation.png">
+                          </li>
+                      <li class="fragment">
+                          The first step to solve is to substitute <img style="display:inline" src="images/rayPoint.png"> into the equation:
+                          <br />
+                          <img style="display:inline" src="images/yieldedPoints.png">
+                      </li>
+
+                  </ul>
+              </section>
+              <section>
+                  <h3>How to Solve Con't</h3>
+                  <ul>
+                      <li class="fragment">
+                          Rearranging the terms yields:
+                          <img style="display:inline" src="images/rearrangedTerms.png">
+                      </li>
+                      <li class="fragment">
+                          Everything is known except <i>t</i>, so this is a classic quadratic, with the form:
+                          <br />
+                          <img style="display:inline" src="images/classicQuadratic.png">
+                      </li>
+                  </ul>
+
+
+
+              </section>
+
+              <section>
+                  <h3>How to Solve Con't and Discriminant</h3>
+                  <img style="display:inline" src="images/classicQuadratic.png">
+                  <ul>
+                      <li class="fragment">
+                          If the discriminant is negative, the ray and sphere don't intersect
+                      </li>
+                      <li class="fragment">
+                          If the discriminant is positive, the ray enters and exits the sphere
+                      </li>
+                      <li class="fragment">
+                          If the discriminant is zero, the ray grazes the sphere at exactly one point
+                      </li>
+                  </ul>
+
+              </section>
+
+          </section>
+
+
+
+          <section>
+              <section>
+                  <h2>Shading</h2>
+                  <p>Shading is a method used to create or enhance the illusion of depth in an image by varying the amount of darkness in the image.</p>
+                  <p>Three levels of shading are used here, thus making it appear to be three dimensional</p>
+                  <img src="https://www.computerhope.com/jargon/s/shading.jpg" alt="Shaded Triangle" width="250" height="225">
+                  <!--align to center-->
+              </section>
+          </section>
+
+          <section>
+              <section>
+                  <h2>Blinn-Phong Shading</h2>
+                  <ul>
+                      <li class="fragment">
+                          Many real surfaces show some degree of shininess, or specular reflections
+                      </li>
+
+                      <li class="fragment">
+                          Produce a reflection that is at its brightest when v and l are symmetrically positioned across the surface normal
+                      </li>
+                      <li class="fragment">
+                          The reflection then decreases smoothly as the vectors move away from a mirror configuration
+                          <canvas data-sample="lighted_sphere"></canvas>
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>The Phong Exponent</h2>
+                  <ul>
+                      <li class="fragment">
+                          <img style="display:inline" src="images/phongExponent.png">
+                          <!--latex or copiable-->
+                      </li>
+
+                      <li class="fragment">
+                          The power, p, controls the apparent shininess of the surface<br />
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/c/c6/Phong_shading.png" alt="Phong Shading">
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Ambient Shading</h2>
+                  <ul>
+                      <li class="fragment">
+                          Surfaces will no illumination will be rendered black
+                      </li>
+                      <li class="fragment">
+                          Surfaces are illuminated by "ambient" light that comes equally from everywhere
+
+                      </li>
+                      <li class="fragment">
+                          <img style="display:inline" src="images/ambientShading.png">
+                          <!--latex or copiable-->
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Gouraud Shading</h2>
+                  <ul>
+                      <li class="fragment">
+                          Achieves smooth lighting on low-polygon surfaces without heavy computational requirements of calculating lighting for each pixel.
+                      </li>
+                      <li class="fragment">
+                          Interpolation method used to produce continuous shading of surfaces represented by polygon meshes
+                          <img src="https://learnopengl.com/img/lighting/basic_lighting_gouruad.png" alt="Gouraud Vs Phong">
+                      </li>
+                  </ul>
+              </section>
+          </section>
+
+
+          <section>
+              <section>
+              <h3>Additions to the Basic Ray Tracing Algorithm</h3>
+              <ul>
+                  <li class="fragment">
+                      A Ray Tracing Program
+                  </li>
+                  <li class="fragment">
+                      Shading
+                  </li>
+                  <li class="fragment">
+                      Ideal Specular Reflection
+                  </li>
+              </ul>
+
+              </section>
+
+              <section>
+                  <h3>Ray Tracing Program</h3>
+                  <ul>
+                      <li class="fragment">
+                          We know how to generate a viewing ray, find closest intersection, and shade resulting intersection
+                      </li>
+                      <li class="fragment">
+                          These are the parts required for a program that produces shaded images with hidden surfaces removed
+                          <img style="display:inline" src="images/rayTraceProgram.png">
+                      </li>
+                  </ul>
+
+              </section>
+
+              <section>
+                  <h3>Shadows</h3>
+                  <ul>
+                      <li class="fragment">
+                          If we are at p on a surface, the point is in shadow if we look in the direction of l and see an object
+                      </li>
+                      <li class="fragment">
+                          If there are no objects, then the light is not blocked and the point is not shaded
+                          <br />
+                          <img src="https://thumbs.gfycat.com/ScarceSoggyLacewing-max-1mb.gif" alt="Shadows" width="300" height="250">
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h3>Ideal Specular Reflection</h3>
+                  <ul>
+                      <li class="fragment">
+                          Ideal specular reflection is also known as mirror reflection
+                      </li>
+                      <li class="fragment">
+                          Vector r is found using a variant of the Phong lighting reflection equation
+                      </li>
+                      <li class="fragment">
+                          There are sign changes because the vector <strong>d</strong> points towards the surface in this case
+                      </li>
+                      <li class="fragment">
+                          <img style="display:inline" src="images/specularReflect.png">
+                          <br />
+                          <!--this line needs to be added to the latex or copiable code-->
+                          <img src="data:image/jpeg;base64,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" alt="IdealSpecular">
+                      </li>
+                  </ul>
+              </section>
+
+
+          </section>
+
+
+          <section>
+              <section>
+                  <h2><a href='visual.html'>Visual</a></h2>
+
+              </section>
+          </section>
+
+      </div>
+      <!-- The navigational controls UI -->
+      <aside class="controls">
+        <a class="left" href="#">&#x25C4;</a>
+        <a class="right" href="#">&#x25BA;</a>
+        <a class="up" href="#">&#x25B2;</a>
+        <a class="down" href="#">&#x25BC;</a>
+      </aside>
+      <!-- Presentation progress bar -->
+      <div class="progress"><span></span></div>
+    </div>
+    <!-- Shaders -->
+    <script id="webgl_vshader" type="x-shader/x-vertex">
+      uniform mat4 u_modelViewProjMatrix;
+      uniform mat4 u_normalMatrix;
+      uniform vec3 lightDir;
+
+      attribute vec3 vNormal;
+      attribute vec4 vColor;
+      attribute vec4 vPosition;
+
+      varying float v_Dot;
+      varying vec4 v_Color;
+
+      void main()
+      {
+          gl_Position = u_modelViewProjMatrix * vPosition;
+          v_Color = vec4(1 , 1, 1, 1);
+          vec4 transNormal = u_normalMatrix * vec4(vNormal, 1);
+          v_Dot = max(dot(transNormal.xyz, lightDir), 0.0);
+      }
+    </script>
+    <script id="webgl_fshader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      varying float v_Dot;
+      varying vec4 v_Color;
+
+      void main()
+      {
+          gl_FragColor = vec4(v_Color.xyz * v_Dot, v_Color.a);
+      }
+    </script>
+    <script id="webgl_bland_fshader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      varying float v_Dot;
+      varying vec4 v_Color;
+
+      void main()
+      {
+          gl_FragColor = vec4(1, 1, 1, 1);
+      }
+    </script>
+    <script id="normal_map_vs" type="x-shader/x-vertex">
+      attribute vec3 tangent;
+
+      varying vec4 vPositionV;
+      varying vec3 vNormalV;
+      varying vec3 vTangentV;
+      varying vec2 vTexCoord;
+
+      void main(void) {
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vPositionV = modelViewMatrix * vec4(position, 1.0);
+        vNormalV = (modelViewMatrix * vec4(normal, 0.0)).xyz;
+        vTangentV = (modelViewMatrix * vec4(tangent, 0.0)).xyz;
+        vTexCoord = uv;
+      }
+    </script>
+    <script id="normal_map_fs" type="x-shader/x-fragment">
+      #ifdef GL_ES
+      precision highp float;
+      #endif
+
+      uniform sampler2D map;
+      uniform float uTime;
+
+      varying vec4 vPositionV;
+      varying vec3 vNormalV;
+      varying vec3 vTangentV;
+      varying vec2 vTexCoord;
+
+      void main(void) {
+        vec3 normalT = texture2D(map, vTexCoord).xyz;
+        normalT.y = 1.0 - normalT.y;
+        normalT = 2.0 * normalT - vec3(1.0, 1.0, 1.0);
+        normalT.z *= 10.0;
+
+        vec3 binormalV = cross(vNormalV, vTangentV);
+        vec3 normalV = normalT.x * vTangentV + normalT.y * binormalV + normalT.z * vNormalV;
+
+        normalV = normalize(normalV);
+        vec3 lightV = normalize(vec3(10.0 * cos(uTime), 0.0, 10.0 * sin(uTime)));
+
+        float d = dot(normalV, lightV);
+        float s = dot(reflect(-lightV, normalV), normalize(-vPositionV.xyz));
+        s = pow(s, 30.0);
+
+        vec3 diffuse = vec3(1, 1, 1);
+        vec3 color = diffuse * (0.1 + 0.5 * d + 0.4 * s);
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    </script>
+    <script src="lib/js/head.min.js"></script>
+    <script>
+      head.js(
+        "lib/js/jquery.min.js",
+        "lib/js/jquery.hotkeys.js",
+        "lib/js/underscore.min.js",
+        "lib/js/swfobject.js",
+        "lib/js/dat.gui.js",
+        "lib/js/EventEmitter.js",
+
+        "lib/js/three.js",
+        "lib/js/three/EffectComposer.js",
+        "lib/js/three/RenderPass.js",
+        "lib/js/three/BloomPass.js",
+        "lib/js/three/ShaderPass.js",
+        "lib/js/three/MaskPass.js",
+
+        // three shaders
+        "lib/js/three/shaders/CopyShader.js",
+        "lib/js/three/shaders/BasicShader.js",
+        "lib/js/three/shaders/DotScreenShader.js",
+        "lib/js/three/shaders/UnpackDepthRGBAShader.js",
+        "lib/js/three/shaders/HorizontalBlurShader.js",
+        "lib/js/three/shaders/VerticalBlurShader.js",
+
+        // js files needed for WebGL specific samples (excluding three js)
+        "lib/js/J3DI.js",
+        "lib/js/J3DIMath.js",
+        "lib/js/webgl-utils.js",
+        "lib/js/webgl-debug.js",
+
+        // App specific js
+        "js/reveal.min.js",
+        "js/stats_bootstrap.js",
+        "js/samples.js",
+        "js/dat.gui.bootstrap.js",
+
+        function() {
+          // Full list of configuration options available here:
+          // https://github.com/hakimel/reveal.js#configuration
+          Reveal.initialize({
+            controls: true,
+            progress: true,
+            history: true,
+
+            transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/linear(2d)
+
+            // Optional libraries used to extend on reveal.js
+            dependencies: [
+              { src: 'lib/js/highlight.js', async: true, callback: function() { window.hljs.initHighlightingOnLoad(); } },
+              { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+              { src: 'lib/js/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+              { src: 'lib/js/data-markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+              { src: 'socket.io/socket.io.js', async: true, condition: function() { return window.location.host === 'localhost:1947'; } },
+              { src: 'plugin/speakernotes/client.js', async: true, condition: function() { return window.location.host === 'localhost:1947'; } },
+              { src: 'js/youtube.js', async: true, condition: function() { return $("#ytplayer").length > 0 } },
+            ]
+          });
+        });
+
+    </script>
+  </body>
+</html>
