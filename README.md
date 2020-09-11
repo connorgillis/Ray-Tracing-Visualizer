@@ -1,10 +1,10 @@
 # Connor and John's (@jecorry) Ray Tracing Tutorial
 
-# index.html: Tutorial, link to visual at end
+index.html: Tutorial, link to visual at end
 
 or
 
-# visual.html: Direct link to visualizer
+visual.html: Direct link to visualizer
 
 
 
